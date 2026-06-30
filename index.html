@@ -183,11 +183,16 @@ body{
 const SPEURTOCHT = {
 
   titel: "Kimberly gaat naar buuten",
-  intro: "Volg de route stap voor stap. Elke volgende stap verschijnt pas zodra je de vorige correct hebt afgerond. Tenzij anders aangegeven is elk antwoord dat je opgeeft met kleine letters.",
+  intro: "Volg de route stap voor stap. Elke volgende stap verschijnt pas zodra je de vorige correct hebt afgerond. Tenzij anders aangegeven is elk antwoord dat je opgeeft met kleine letters. TIP: Zet je Strava aan zodat je je route achteraf nogmaals kan terugzien!",
 
   // Wachtwoord dat ingevoerd moet worden voordat de speurtocht begint.
   // Hoofdletters maken niet uit. Laat leeg ("") om het wachtwoord uit te zetten.
   wachtwoord: "Kimberly",
+
+  // Failsafe: na dit aantal mislukte pogingen (fout antwoord OF mislukte
+  // locatiecheck) wordt een stap alsnog automatisch goedgekeurd, zodat
+  // niemand definitief vastloopt. Verhoog/verlaag naar wens.
+  failsafe: 10,
 
   finale: {
     vlag: "🏁",
@@ -196,64 +201,114 @@ const SPEURTOCHT = {
   },
 
   stappen: [
+//1
     {
-      titel: "Startlijn",
-      route: "Start bij je voordeur. Loop je voordeur uit en kijk naar de overkant van de straat. Welke kleur is de voorgevel van Nederstraat 12?",
+      titel: "Start",
+      route: "Je begint vandaag bij jouw nederige stulpje aan de Nederstraat. Loop je voordeur uit en kijk naar de overkant van de straat. Welke kleur is de voorgevel van nummer 12?",
       slot: { type:"code", antwoord:"wit", hint:"zwart" }
     },
+//2
     {
-      titel: "Trots dat dat je lukte ",
-      route: "Loop rechts in de richting van de Punt. Ga naast de Havenkraan staan.",
-      opdracht: "",
+      titel: "Ik ben trots dat je dat lukte, lekker bezig",
+      route: "Loop nu naar rechts in de richting van het haventje.",
+      opdracht: "Ga nu naast de Havenkraan staan.",
       gps: { lat:51.5010, lng:3.6226, radius:10 },
-      slot: { type:"knop", knoptekst:"Ik ben bij de Havenkraan" }
+      slot: { type:"knop", knoptekst:"Ik bin d'r" }
     },
+//3
     {
-      titel: "De Havenkraan",
-      route: "Steek de brug over en sla rechtsaf de Dwarskaai op. Loop deze straat uit in de richting van de stad. Stop pas zodra je bij de Korte Delft nummer 2 bent. ",
+      titel: "De Havenkraan was wel makkelijk he?",
+      route: "Steek nu de brug over en sla rechtsaf de Dwarskaai op. Stop bij de grote 'restafvalcontainter'",
+      opdracht: "Aan de overkant is als het goed is een wijnhandel/restaurant. Welk dier komt in deze naam voor?",
+      gps: { lat:51.5010, lng:3.6199, radius:10 },
+      slot: { type:"code", antwoord:"hert", hint:"Je ziet ze vliegennnn" }
+    },
+//4
+    {
+      titel: "Misschien moet het wat moeilijker..",
+      route: "Ga naar de Graanbeurs op het Damplein en ga in het midden staan.",
+      opdracht: "Uit welk jaar komt deze Graanbeurs? (Er bestond eerst een andere Graanbeurs maar die is afgebroken.)",
+      gps: { lat:51.5005, lng:3.6175, radius:10 },
+      slot: { type:"code", antwoord:"1971", hint:"29 jaar voor je geboorte" }
+    },
+//5
+    {
+      titel: "... Jambo",
+      route: " Loop deze straat uit in de richting van de stad. Stop pas zodra je bij de Korte Delft nummer 2 bent.",
       opdracht: "Sta je bij het huis? Vul dan de naam (in hoofdletters) in van de winkel die zich hiertegenover bevindt.",
       gps: { lat:51.4994, lng:3.6162, radius:10 },
       slot: { type:"code", antwoord:"COCO", hint:"Vier letters." }
     },
+//6
     {
       titel: "Hoelang is het geleden dat je nieuwe schoenen hebt gekocht?",
       route: "Loop een rondje door de COCO.",
       opdracht: "Kijk of er nog iets leuks tussenzit voor jezelf.",
       slot: { type:"knop", knoptekst:"Ik heb mezelf getrakteerd op nieuwe schoenen." }
     },
+//7
+    {
+      titel: "Mijn nieuwe patta's lopen nog moeilijk, graag wat langzamer..",
+      route: "Verlaat de COCO en loop linksaf de Reigerstraat door en geniet van de zwevende versieringen. Aan het einde van de straat sla je rechtsaf en stop je.",
+      opdracht: "Ruik aan een bloem en geniet van de geur. Misschien zit er nog een leuk bloemetje bij dat je op de terugweg kan halen voor thuis?",
+      gps: { lat:51.4995, lng:3.6154, radius:10 },
+      slot: { type:"knop", knoptekst:"Er zit een blaadje in mijn neus. Ik heb helemaal geen neus." }
+    },
+//8
+    {
+      titel: "Het is recentelijk immaterieel erfgoed geworden..",
+      route: "Loop Onder Den Toren door en sla linksaf het plein op in de richting van de Lange Delft. Halverwege kom je een standbeeld tegen.",
+      opdracht: "Uit welk jaar komt dit standbeeld? ",
+      gps: { lat:51.4992, lng:3.6150, radius:10 },
+      slot: { type:"code", antwoord:"2000", hint:"29 jaar ouder dan de Graanbeurs" }
+    },
+//9
     {
       titel: "En we gaan dooorrrrrr",
-      route: "Verlaat de COCO en loop rechtsaf richting de Markt. Stop zodra je ter hoogte van de boom tegenover de winkel Ziengs bent.",
+      route: "Loop vanaf hier de Lange Viele op en stop ter hoogte van de boom die voor de winkel 'ZIENGS' staat. Als het goed is zie je hier ergens een standbeeld.",
       opdracht: "Hoeveel armen heeft het op de strandstoel liggende standbeeld achter haar hoofd?",
       gps: { lat:51.4985, lng:3.6149, radius:10 },
       slot: { type:"code", antwoord:"2", hint:"Meer heb je er niet als het goed is.." }
     },
+//10
     {
-      titel: "Je kan in ieder geval nog tellen dus",
+      titel: "Je kan in ieder geval nog tellen dus..",
+      route: "Loop verder naar de Markt.",
+      opdracht: "Aan je rechterzijde bevindt zich dadelijk een Jamin. Loop de winkel in en haal, als je het niet kan laten, wat snoep voor onderweg. Je gaat de winkel wel echt in moeten want de coördinaten zijn nu erg klein ;).",
+      gps: { lat:51.4984, lng:3.6128, radius:5 },
+      slot: { type:"knop", knoptekst:"Ik hou wel rekening met dat ik nog moet lunchen." }
+    },
+//11
+    {
+      titel: "De holle kies is weer gevuld",
       route: "Loop verder naar de Markt. Zodra je hier bent sla je linksaf in de richting van de Sting. Ga links achter de Friet-Handel staan ter hoogte van de eerste fietsbeugel. ",
       opdracht: "Welke kleur hebben de eerste 5 letters van de winkel SPORTSWORLD?",
       gps: { lat:51.4981, lng:3.6119, radius:10 },
       slot: { type:"code", antwoord:"blauw", hint:"Woutennn" }
     },
+//12
     {
       titel: "Hoelang is het geleden dat je binnen hebt gekeken naar een leuk boek?",
       route: "Loop een rondje door de Drukkery en koop een leuk boek. Fantasy-tip: Brandon Sanderson, Matt Dinniman, Raymond E-Feist, George R.R. Martin etc. ",
       opdracht: "",
       slot: { type:"knop", knoptekst:"Ik heb een keileuk boek gevonden" }
     },
+//13
     {
       titel: "Haal je neus maar uit de boeken",
       route: "Verlaat de winkel en ga naar rechts de Gravenstraat in. Zodra je weer rechtsaf kan doe je dit. ",
-      opdracht: "Loop door totdat je vlak voor Admiraal de Ruyter Casino staat. Kijk in de richting van Plein 40.",
+      opdracht: "Loop door totdat je vlak voor Admiraal de Ruyter Casino staat. Kijk in de richting van Plein 1940.",
       gps: { lat:51.4975, lng:3.6107, radius:10 },
       slot: { type:"knop", knoptekst:"Ik sta met mijn neus (niet zo'n grote als die van Neuf) de goede kant op" }
     },
+//14
     {
       titel: "Dikke buik krijgen.",
-      route: "Aan het begin van plein 1940 vanaf waar jij staat, aan de rechterzijde, bevind zich het voormalige Beaux. Nu heet dit Greenwoods, loop hiernaar toe.",
+      route: "Aan het begin van plein 1940 vanaf waar jij staat, aan de rechterzijde, bevindt zich het voormalige Beaux. Nu heet dit Greenwoods, loop hiernaar toe.",
       opdracht: "Kijk op de kaart en bestel voor jezelf een lekker lunchgerecht! Ter controle dat je echt kijkt: Er staan drie smoothies op de kaart, van welk fruit is de eerst genoemde smoothie gemaakt? ",
       slot: { type:"code", antwoord:"framboos", hint:"Niet blij maar..?" }
     },
+//15
     {
       titel: "Het einde is nabij",
       route: "Verlaat met je volle buik Greenwoods en loop in de richting van de kruising van Plein 1940, de Pottenmarkt en de Markt. ",
@@ -261,6 +316,7 @@ const SPEURTOCHT = {
       gps: { lat:51.4981744, lng:3.6106047, radius:10 },
       slot: { type:"knop", knoptekst:"Jur ligt hier nog steeds op de grond" }
     },
+//16
     {
       titel: "Het einde van deze route",
       route: "Nu je hier toch staat, loop gezellig even naar binnen bij Sev (of een ander café)",
@@ -268,6 +324,7 @@ const SPEURTOCHT = {
       gps: { lat:51.4983526, lng:3.6107056, radius:10 },
       slot: { type:"knop", knoptekst:"Wat een kutspeurtocht heeft Neuf gemaakt, ik doe dit nooit meer." }
     },
+//17
     {
       titel: "",
       route: "",
@@ -322,6 +379,7 @@ const SPEURTOCHT = {
   const data = SPEURTOCHT;
   const totaal = data.stappen.length;
   const OPSLAG = "speurtocht_voortgang_v1";
+  const FAILSAFE = (typeof data.failsafe === "number" && data.failsafe > 0) ? data.failsafe : 10;
 
   // Testmodus: voeg ?test toe aan de link om locatiechecks te kunnen overslaan.
   const TESTMODUS = new URLSearchParams(location.search).has("test");
@@ -396,9 +454,14 @@ const SPEURTOCHT = {
       const knop=document.createElement("button"); knop.className="knop"; knop.textContent="Check";
       const fout=document.createElement("p"); fout.className="fout"; fout.style.display="none";
       fout.textContent="Dat klopt nog niet. Probeer het opnieuw.";
+      let pogingen=0;
       function probeer(){
         if (normaliseer(input.value)===normaliseer(slot.antwoord)){ voltooiStap(); }
-        else { fout.style.display="block"; input.focus(); input.select(); }
+        else {
+          pogingen++;
+          if (pogingen>=FAILSAFE){ voltooiStap(); return; }
+          fout.style.display="block"; input.focus(); input.select();
+        }
       }
       knop.addEventListener("click",probeer);
       input.addEventListener("keydown",e=>{ if(e.key==="Enter") probeer(); });
@@ -425,6 +488,7 @@ const SPEURTOCHT = {
     const status=document.createElement("p"); status.className="gps-status";
     const knop=document.createElement("button"); knop.className="knop";
     knop.textContent="📍 Controleer mijn locatie";
+    let gpsPogingen=0;
 
     knop.addEventListener("click",()=>{
       if (!navigator.geolocation){
@@ -446,6 +510,10 @@ const SPEURTOCHT = {
             gpsGehaald[index]=true;
             setTimeout(naSucces,500);
           } else {
+            gpsPogingen++;
+            if (gpsPogingen>=FAILSAFE){ gpsGehaald[index]=true; vul.style.width="100%";
+              status.className="gps-status ok"; status.textContent="Je mag door ✓";
+              setTimeout(naSucces,400); return; }
             status.className="gps-status err";
             status.textContent="Je bent nog ongeveer "+leesbaar(d)+" van het punt. Loop wat dichterbij en probeer opnieuw.";
             // balk vult naarmate je dichterbij komt (tot 5x de straal)
@@ -454,7 +522,12 @@ const SPEURTOCHT = {
           }
         },
         err=>{
-          knop.disabled=false; status.className="gps-status err";
+          knop.disabled=false;
+          gpsPogingen++;
+          if (gpsPogingen>=FAILSAFE){ gpsGehaald[index]=true;
+            status.className="gps-status ok"; status.textContent="Je mag door ✓";
+            setTimeout(naSucces,400); return; }
+          status.className="gps-status err";
           if (err.code===1) status.textContent="Geen toegang tot je locatie. Sta het toe via de melding of in de instellingen en probeer opnieuw.";
           else if (err.code===2) status.textContent="Locatie niet beschikbaar. Zorg dat GPS aanstaat en probeer het buiten opnieuw.";
           else if (err.code===3) status.textContent="Het duurde te lang. Probeer het opnieuw.";
