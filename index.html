@@ -269,14 +269,14 @@ const SPEURTOCHT = {
       slot: { type:"knop", knoptekst:"Wat een kutspeurtocht heeft Neuf gemaakt, ik doe dit nooit meer." }
     },
     {
-      titel: "Een laatste verrassing",
-      route: "Geniet van je koffie en bekijk de foto hieronder.",
+      titel: "",
+      route: "",
       opdracht: "",
       // Zet de foto in dezelfde GitHub-repo (bijv. een bestand 'foto.jpg')
       // en zet hieronder de bestandsnaam. Een internet-link (https://...) mag ook.
       foto: "foto.jpg",
-      fotobijschrift: "Pas dit bijschrift aan, of laat het leeg.",
-      slot: { type:"knop", knoptekst:"Wat een leuke verrassing!" }
+      fotobijschrift: "",
+      slot: { type:"knop", knoptekst:"Yo Yoo Yooooooo" }
     }
   ]
 };
@@ -507,13 +507,17 @@ const SPEURTOCHT = {
     const head=document.createElement("div"); head.className="stap-head";
     head.innerHTML='<span class="nummer">Stap '+(index+1)+(isAf?' ✓':'')+'</span>';
     body.appendChild(head);
-    const titel=document.createElement("div"); titel.className="stap-titel";
-    titel.textContent=stap.titel||("Stap "+(index+1)); body.appendChild(titel);
+    if (stap.titel && stap.titel.trim()){
+      const titel=document.createElement("div"); titel.className="stap-titel";
+      titel.textContent=stap.titel; body.appendChild(titel);
+    }
 
     if (!isAf){
-      const route=document.createElement("div"); route.className="route";
-      route.innerHTML='<span class="label">Route</span><p></p>';
-      route.querySelector("p").textContent=stap.route||""; body.appendChild(route);
+      if (stap.route && stap.route.trim()){
+        const route=document.createElement("div"); route.className="route";
+        route.innerHTML='<span class="label">Route</span><p></p>';
+        route.querySelector("p").textContent=stap.route; body.appendChild(route);
+      }
       if (stap.opdracht && stap.opdracht.trim()){
         const opd=document.createElement("div"); opd.className="opdracht";
         opd.innerHTML='<span class="label">Opdracht</span><p></p>';
