@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <style>
 :root{
@@ -137,6 +139,25 @@ body{
   line-height:1.15; margin:.35em 0 .45em; color:var(--paper); }
 .modal-kaart p{ color:var(--paper); font-size:1rem; line-height:1.55; }
 
+.route-knop{ position:fixed; right:14px; bottom:calc(env(safe-area-inset-bottom) + 14px); z-index:45;
+  background:var(--amber); color:#221603; border:none; border-radius:24px; padding:11px 16px;
+  font-family:var(--display); font-weight:600; font-size:.88rem; cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,.45); }
+.route-modal{ position:fixed; inset:0; z-index:70; background:#0c1712; display:none; flex-direction:column; }
+.route-modal.open{ display:flex; }
+.route-modal header{ display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; color:var(--paper); }
+.route-modal header b{ font-family:var(--display); font-size:1.05rem; }
+.route-sluit{ background:var(--surface-2); color:var(--paper); border:1px solid var(--line);
+  border-radius:50%; width:36px; height:36px; font-size:1.3rem; cursor:pointer; }
+#route-map{ flex:1; min-height:0; background:#1c3329; }
+.route-modal .balk{ padding:12px 16px; background:var(--surface); color:var(--paper);
+  display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.route-status{ color:var(--sage); font-size:.85rem; }
+.route-tijd{ font-family:var(--display); font-weight:700; }
+.route-dl{ background:var(--mint); color:#08130d; border:none; border-radius:10px;
+  padding:10px 14px; font-weight:600; font-family:var(--display); cursor:pointer; }
+
 /* GPS-blok */
 .gps{ margin-top:18px; padding:14px 16px; border-radius:12px;
   background:rgba(127,200,169,.07); border:1px solid rgba(127,200,169,.22); }
@@ -217,6 +238,10 @@ const SPEURTOCHT = {
   // niemand definitief vastloopt. Verhoog/verlaag naar wens.
   failsafe: 10,
 
+  // (Optioneel) Endpoint waar de tijdsduur na afloop naartoe wordt gestuurd,
+  // bijvoorbeeld een gratis Formspree-URL. Laat leeg ("") als je dit niet gebruikt.
+  resultatenEndpoint: "",
+
   finale: {
     vlag: "🏁",
     titel: "Goed bezig Kimmie!",
@@ -251,7 +276,7 @@ const SPEURTOCHT = {
       titel: "Misschien moet het wat moeilijker..",
       route: "Ga naar de Graanbeurs op het Damplein en ga in het midden staan.",
       opdracht: "Uit welk jaar komt deze Graanbeurs? (Er bestond eerst een andere Graanbeurs maar die is afgebroken.)",
-      gps: { lat:51.5005, lng:3.6175, radius:10 },
+      gps: { lat:51.5005033, lng:3.6175945, radius:10 },
       slot: { type:"code", antwoord:"1971", hint:"29 jaar voor je geboorte" }
     },
 //5
@@ -259,7 +284,7 @@ const SPEURTOCHT = {
       titel: "... Jambo",
       route: " Loop deze straat uit in de richting van de stad. Stop pas zodra je bij de Korte Delft nummer 2 bent.",
       opdracht: "Sta je bij het huis? Vul dan de naam (in hoofdletters) in van de winkel die zich hiertegenover bevindt.",
-      gps: { lat:51.4994, lng:3.6162, radius:10 },
+      gps: { lat:51.4994263, lng:3.6160684, radius:10 },
       slot: { type:"code", antwoord:"COCO", hint:"Vier letters." }
     },
 //6
@@ -274,7 +299,7 @@ const SPEURTOCHT = {
       titel: "Mijn nieuwe patta's lopen nog moeilijk, graag wat langzamer..",
       route: "Verlaat de COCO en loop linksaf de Reigerstraat door en geniet van de zwevende versieringen. Aan het einde van de straat sla je rechtsaf en stop je.",
       opdracht: "Ruik aan een bloem en geniet van de geur. Misschien zit er nog een leuk bloemetje bij dat je op de terugweg kan halen voor thuis?",
-      gps: { lat:51.4995, lng:3.6154, radius:10 },
+      gps: { lat:51.4995899, lng:3.6154783, radius:10 },
       slot: { type:"knop", knoptekst:"Er zit een blaadje in mijn neus. Ik heb helemaal geen neus." }
     },
 //8
@@ -282,7 +307,7 @@ const SPEURTOCHT = {
       titel: "Het is recentelijk immaterieel erfgoed geworden..",
       route: "Loop Onder Den Toren door en sla linksaf het plein op in de richting van de Lange Delft. Halverwege kom je een standbeeld tegen.",
       opdracht: "Uit welk jaar komt dit standbeeld? ",
-      gps: { lat:51.4992, lng:3.6150, radius:10 },
+      gps: { lat:51.4992710, lng:3.6150786, radius:10 },
       slot: { type:"code", antwoord:"2000", hint:"29 jaar ouder dan de Graanbeurs" }
     },
 //9
@@ -298,7 +323,7 @@ const SPEURTOCHT = {
       titel: "Je kan in ieder geval nog tellen dus..",
       route: "Loop verder naar de Markt.",
       opdracht: "Aan je rechterzijde bevindt zich dadelijk een Jamin. Loop de winkel in en haal, als je het niet kan laten, wat snoep voor onderweg. Je gaat de winkel wel echt in moeten want de coördinaten zijn nu erg klein ;).",
-      gps: { lat:51.4984, lng:3.6128, radius:5 },
+      gps: { lat:51.4983810, lng:3.6128765, radius:5 },
       slot: { type:"knop", knoptekst:"Ik hou wel rekening met dat ik nog moet lunchen." }
     },
 //11
@@ -306,7 +331,7 @@ const SPEURTOCHT = {
       titel: "De holle kies is weer gevuld",
       route: "Loop verder naar de Markt. Zodra je hier bent sla je linksaf in de richting van de Sting. Ga links achter de Friet-Handel staan ter hoogte van de eerste fietsbeugel. ",
       opdracht: "Welke kleur hebben de eerste 5 letters van de winkel SPORTSWORLD?",
-      gps: { lat:51.4981, lng:3.6119, radius:10 },
+      gps: { lat:51.4981022, lng:3.6119941, radius:10 },
       slot: { type:"code", antwoord:"blauw", hint:"Woutennn" }
     },
 //12
@@ -321,7 +346,7 @@ const SPEURTOCHT = {
       titel: "Haal je neus maar uit de boeken",
       route: "Verlaat de winkel en ga naar rechts de Gravenstraat in. Zodra je weer rechtsaf kan doe je dit. ",
       opdracht: "Loop door totdat je vlak voor Admiraal de Ruyter Casino staat. Kijk in de richting van Plein 1940.",
-      gps: { lat:51.4975, lng:3.6107, radius:10 },
+      gps: { lat:51.4975445, lng:3.6107228, radius:10 },
       slot: { type:"knop", knoptekst:"Ik sta met mijn neus (niet zo'n grote als die van Neuf) de goede kant op" }
     },
 //14
@@ -450,37 +475,47 @@ const SPEURTOCHT = {
   }
   function leesbaar(m){ return m>=1000 ? (m/1000).toFixed(1)+" km" : Math.round(m)+" m"; }
 
-  // Pop-up die verschijnt zodra de failsafe ingrijpt (na te veel fouten).
-  // Pas de teksten hieronder gerust aan; er wordt willekeurig één gekozen.
-  function toonFailsafePopup(naDicht){
-    const teksten = [
-      { titel:"Vooruit dan maar… 🙄",
-        body:"Tien keer fout achter elkaar. Tíén! Eerlijk: óf jij bent niet de speurneus die we dachten, óf Neuf heeft deze vraag knullig in elkaar geflanst. We houden het gezellig op dat laatste. Je mag door." },
-      { titel:"De failsafe grijpt in 🚨",
-        body:"Na 10 mislukte pogingen concludeert het systeem: ofwel jij bent hopeloos, ofwel Neuf was niet helemaal lekker in z'n bol bij het maken van deze vraag. Beide kan natuurlijk ook. Je wordt alsnog doorgelaten." },
-      { titel:"Okééé, je mag door 🤷",
-        body:"Tien keer raak gemist — bijna een prestatie op zich. Óf de maker (Neuf, ja) is gewoon gek. We drukken een oogje toe en sturen je naar de volgende stap." }
-    ];
-    const k = teksten[Math.floor(Math.random()*teksten.length)];
+  // Algemene pop-up (donkere overlay, kruisje rechtsboven, sluit-callback).
+  function toonPopup(eyebrowTekst, titel, body, naDicht){
     const ov = document.createElement("div"); ov.className="modal-overlay";
     const kaart = document.createElement("div"); kaart.className="modal-kaart onthul";
     kaart.setAttribute("role","dialog"); kaart.setAttribute("aria-modal","true");
     const sluit = document.createElement("button"); sluit.className="modal-sluit";
     sluit.setAttribute("aria-label","Sluiten"); sluit.textContent="×";
-    const eyebrow = document.createElement("div"); eyebrow.className="eyebrow"; eyebrow.textContent="Failsafe";
-    const h = document.createElement("h2"); h.textContent=k.titel;
-    const p = document.createElement("p"); p.textContent=k.body;
+    const eyebrow = document.createElement("div"); eyebrow.className="eyebrow"; eyebrow.textContent=eyebrowTekst;
+    const h = document.createElement("h2"); h.textContent=titel;
+    const p = document.createElement("p"); p.textContent=body;
     kaart.appendChild(sluit); kaart.appendChild(eyebrow); kaart.appendChild(h); kaart.appendChild(p);
     ov.appendChild(kaart); document.body.appendChild(ov);
-    function dicht(){
-      ov.remove();
-      document.removeEventListener("keydown", esc);
-      if (typeof naDicht==="function") naDicht();
-    }
+    function dicht(){ ov.remove(); document.removeEventListener("keydown", esc); if (typeof naDicht==="function") naDicht(); }
     function esc(e){ if (e.key==="Escape") dicht(); }
     sluit.addEventListener("click", dicht);
     document.addEventListener("keydown", esc);
     sluit.focus();
+  }
+
+  // Pop-up bij failsafe (na te veel fouten). Teksten gerust aanpassen.
+  function toonFailsafePopup(naDicht){
+    const teksten = [
+      { titel:"Vooruit dan maar… 🙄", body:"Tien keer fout achter elkaar. Tíén! Eerlijk: óf jij bent niet de speurneus die we dachten, óf Neuf heeft deze vraag knullig in elkaar geflanst. We houden het gezellig op dat laatste. Je mag door." },
+      { titel:"De failsafe grijpt in 🚨", body:"Na 10 mislukte pogingen concludeert het systeem: ofwel jij bent hopeloos, ofwel Neuf was niet helemaal lekker in z'n bol bij het maken van deze vraag. Beide kan natuurlijk ook. Je wordt alsnog doorgelaten." },
+      { titel:"Okééé, je mag door 🤷", body:"Tien keer raak gemist — bijna een prestatie op zich. Óf de maker (Neuf, ja) is gewoon gek. We drukken een oogje toe en sturen je naar de volgende stap." }
+    ];
+    const k = teksten[Math.floor(Math.random()*teksten.length)];
+    toonPopup("Failsafe", k.titel, k.body, naDicht);
+  }
+
+  // Pop-up bij een goed beantwoorde vraag. Teksten gerust aanpassen.
+  function toonSuccesPopup(naDicht){
+    const teksten = [
+      { titel:"Goed gezien! 🎉", body:"Helemaal correct. Je bent toch een echte speurneus. Door naar de volgende!" },
+      { titel:"Bingo! ✅", body:"Dat klopt als een bus. Neuf wist wel dat je dit kon. Op naar het volgende raadsel." },
+      { titel:"Kimberly: 1 — de stad: 0 🕵️", body:"Juist beantwoord en lekker bezig. Verder met de tocht!" },
+      { titel:"Toppie! 🙌", body:"Correct! Even genieten van dit moment van glorie, en dan snel door." },
+      { titel:"Precies goed! 🌟", body:"Je hebt 'm. Op dit tempo ben je zo bij de koffie. Volgende stap!" }
+    ];
+    const k = teksten[Math.floor(Math.random()*teksten.length)];
+    toonPopup("Goed!", k.titel, k.body, naDicht);
   }
 
   function voltooiStap(){
@@ -522,7 +557,7 @@ const SPEURTOCHT = {
       let pogingen=0;
       function probeer(){
         if (normaliseer(input.value)===normaliseer(slot.antwoord)){
-          bewaarAntwoord(index, input.value.trim(), true); voltooiStap();
+          bewaarAntwoord(index, input.value.trim(), true); toonSuccesPopup(voltooiStap);
         }
         else {
           pogingen++;
@@ -707,15 +742,131 @@ const SPEURTOCHT = {
   function render(){
     bouwSpoor(); lijstEl.innerHTML="";
     data.stappen.forEach((s,i)=>lijstEl.appendChild(maakStap(s,i)));
-    if (voltooid>=totaal) lijstEl.appendChild(maakFinale());
+    if (voltooid>=totaal){ lijstEl.appendChild(maakFinale()); finishTracking(); }
     netOntgrendeld=-1;
   }
+
+  // ==================== Route-opname ====================
+  const TRACK_KEY = "speurtocht_track_v1";
+  let track=[], startTijd=null, eindTijd=null, watchId=null, afgerond=false;
+  let rmap=null, rline=null, rpos=null, routeModal=null;
+
+  try {
+    const raw = localStorage.getItem(TRACK_KEY);
+    if (raw){ const s=JSON.parse(raw); track=s.track||[]; startTijd=s.start||null; eindTijd=s.eind||null; afgerond=!!s.afgerond; }
+  } catch(e){}
+
+  function trackBewaar(){
+    try { localStorage.setItem(TRACK_KEY, JSON.stringify({track:track,start:startTijd,eind:eindTijd,afgerond:afgerond})); } catch(e){}
+  }
+
+  function startTracking(){
+    if (afgerond) return;
+    if (startTijd===null){ startTijd=Date.now(); trackBewaar(); }
+    if (watchId!==null || !navigator.geolocation) return;
+    watchId = navigator.geolocation.watchPosition(p=>{
+      const pt={lat:p.coords.latitude, lng:p.coords.longitude, t:Date.now()};
+      const v=track[track.length-1];
+      if (!v || afstandMeter(v.lat,v.lng,pt.lat,pt.lng) >= 3){ track.push(pt); trackBewaar(); updateKaart(); }
+    }, ()=>{}, { enableHighAccuracy:true, maximumAge:5000, timeout:20000 });
+  }
+
+  function finishTracking(){
+    if (afgerond) return;
+    afgerond=true; eindTijd=Date.now();
+    if (watchId!==null){ try{ navigator.geolocation.clearWatch(watchId);}catch(e){} watchId=null; }
+    trackBewaar(); verstuurResultaat(); updateBalk();
+  }
+
+  function duurTekst(){
+    if (startTijd===null) return "00:00:00";
+    const eind = eindTijd || Date.now();
+    let s=Math.max(0, Math.floor((eind-startTijd)/1000));
+    const h=Math.floor(s/3600); s-=h*3600; const m=Math.floor(s/60); s-=m*60;
+    const pad=n=>String(n).padStart(2,"0");
+    return pad(h)+":"+pad(m)+":"+pad(s);
+  }
+
+  function verstuurResultaat(){
+    const ep = data.resultatenEndpoint;
+    if (!ep || startTijd===null || eindTijd===null) return;
+    const payload={ start:new Date(startTijd).toISOString(), eind:new Date(eindTijd).toISOString(),
+      duurSeconden:Math.round((eindTijd-startTijd)/1000), duur:duurTekst() };
+    try { fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); } catch(e){}
+  }
+
+  function downloadGPX(){
+    let g='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Speurtocht Kimberly" xmlns="http://www.topografix.com/GPX/1/1">\n<trk><name>Speurtocht Kimberly</name><trkseg>\n';
+    track.forEach(p=>{ g+='<trkpt lat="'+p.lat+'" lon="'+p.lng+'"><time>'+new Date(p.t).toISOString()+'</time></trkpt>\n'; });
+    g+='</trkseg></trk></gpx>\n';
+    const blob=new Blob([g],{type:'application/gpx+xml'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url; a.download="speurtocht-route.gpx";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+  }
+
+  function openKaart(){
+    if (typeof L==="undefined") return;
+    if (!rmap){
+      rmap = L.map("route-map");
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap-bijdragers'}).addTo(rmap);
+      rline = L.polyline([], {color:'#e8a33d', weight:4}).addTo(rmap);
+      rmap.setView([51.4994,3.616],15);
+    }
+    setTimeout(()=>{ if(rmap){ rmap.invalidateSize(); } updateKaart(); },120);
+  }
+
+  function updateKaart(){
+    if (!rmap || !rline) return;
+    const pts=track.map(p=>[p.lat,p.lng]);
+    rline.setLatLngs(pts);
+    if (pts.length){
+      const laatste=pts[pts.length-1];
+      if (!rpos){ rpos=L.circleMarker(laatste,{radius:7,color:'#fff',weight:2,fillColor:'#e07a5f',fillOpacity:1}).addTo(rmap); }
+      else rpos.setLatLng(laatste);
+      try { rmap.fitBounds(pts,{padding:[30,30],maxZoom:17}); } catch(e){}
+    }
+    updateBalk();
+  }
+
+  function updateBalk(){
+    if (!routeModal) return;
+    const tEl=routeModal.querySelector(".route-tijd"); if (tEl) tEl.textContent=duurTekst();
+    const dl=routeModal.querySelector(".route-dl"); if (dl) dl.style.display = afgerond ? "inline-block" : "none";
+    const st=routeModal.querySelector(".route-status");
+    if (st) st.textContent = afgerond ? "Route vastgezet ✓" : (track.length ? "Route wordt opgenomen…" : "Wachtend op locatie…");
+  }
+
+  function bouwRouteUI(){
+    const knop=document.createElement("button"); knop.className="route-knop"; knop.textContent="🗺️ Mijn route";
+    document.body.appendChild(knop);
+    routeModal=document.createElement("div"); routeModal.className="route-modal";
+    routeModal.innerHTML =
+      '<header><b>Mijn route</b><button class="route-sluit" aria-label="Sluiten">×</button></header>'+
+      '<div id="route-map"></div>'+
+      '<div class="balk"><span class="route-status"></span>'+
+      '<span>Tijd: <span class="route-tijd">00:00:00</span></span>'+
+      '<button class="route-dl" style="display:none">Download (GPX)</button></div>';
+    document.body.appendChild(routeModal);
+    knop.addEventListener("click", ()=>{ routeModal.classList.add("open"); openKaart(); });
+    routeModal.querySelector(".route-sluit").addEventListener("click", ()=> routeModal.classList.remove("open"));
+    routeModal.querySelector(".route-dl").addEventListener("click", downloadGPX);
+    setInterval(()=>{ if (routeModal.classList.contains("open")) updateBalk(); }, 1000);
+    updateBalk();
+  }
+  // =====================================================
 
   document.getElementById("reset").addEventListener("click",()=>{
     if (confirm("Weet je zeker dat je opnieuw wilt beginnen? Alle voortgang gaat verloren.")){
       voltooid=0; bewaar();
       antwoorden={}; try { localStorage.removeItem(ANTW); } catch(e){}
       for (const k in gpsGehaald) delete gpsGehaald[k];
+      track=[]; startTijd=null; eindTijd=null; afgerond=false;
+      if (watchId!==null){ try{navigator.geolocation.clearWatch(watchId);}catch(e){} watchId=null; }
+      try { localStorage.removeItem(TRACK_KEY); } catch(e){}
+      if (rline) rline.setLatLngs([]);
+      startTracking();
       render(); window.scrollTo({top:0,behavior:"smooth"});
     }
   });
@@ -731,6 +882,7 @@ const SPEURTOCHT = {
 
   if (heeftToegang){
     gate.hidden = true;
+    startTracking();
   } else {
     const gInput = document.getElementById("slot-input");
     const gKnop  = document.getElementById("slot-knop");
@@ -739,6 +891,7 @@ const SPEURTOCHT = {
       if (normaliseer(gInput.value) === normaliseer(data.wachtwoord)){
         try { localStorage.setItem(TOEGANG, "ok"); } catch(e){}
         gate.hidden = true;
+        startTracking();
       } else {
         gFout.style.display = "block"; gInput.focus(); gInput.select();
       }
@@ -749,6 +902,7 @@ const SPEURTOCHT = {
     gInput.focus();
   }
 
+  bouwRouteUI();
   render();
 })();
 </script>

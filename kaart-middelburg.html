@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speurtocht Kimberly — exacte GPS-punten</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  html,body{ margin:0; height:100%; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  #kop{ background:#14241f; color:#f2ede0; padding:10px 16px; }
+  #kop b{ font-size:1rem; }
+  #kop span{ color:#8fa89a; font-size:.85rem; }
+  #kaart{ width:100%; height:calc(100% - 52px); }
+  .num-label{ background:none; border:none; box-shadow:none; color:#fff;
+    font-weight:700; font-size:12px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+  .leaflet-popup-content{ font-size:13px; line-height:1.4; }
+  .leaflet-popup-content b{ color:#14241f; }
+  .leaflet-popup-content code{ background:#f2ede0; padding:1px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+<div id="kop"><b>Speurtocht Kimberly — exacte GPS-punten</b><br>
+<span>Markers staan precies op de ingevoerde lat/lon. De cirkel toont de tolerantie (straal). Tik een punt voor details.</span></div>
+<div id="kaart"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// Exacte punten uit het speurtocht-bestand (stapnr, lat, lng, straal, titel)
+const PUNTEN = [
+  { n:2,  lat:51.5010,    lng:3.6226,    r:10, t:"Havenkraan" },
+  { n:3,  lat:51.5010,    lng:3.6199,    r:10, t:"Dwarskaai / wijnhandel" },
+  { n:4,  lat:51.5005033,    lng:3.6175945,    r:10, t:"Graanbeurs (Damplein)" },
+  { n:5,  lat:51.4994263,    lng:3.6160684,    r:10, t:"Korte Delft 2 (COCO)" },
+  { n:7,  lat:51.4995899,    lng:3.6154783,    r:10, t:"Einde Reigerstraat" },
+  { n:8,  lat:51.499271,    lng:3.6150786,    r:10, t:"Standbeeld Lange Delft" },
+  { n:9,  lat:51.4985,    lng:3.6149,    r:10, t:"Boom bij ZIENGS" },
+  { n:10, lat:51.4983810,    lng:3.6128765,    r:5,  t:"Jamin (straal 5 m)" },
+  { n:11, lat:51.4981022,    lng:3.6119941,    r:10, t:"Friet-Handel / Sportsworld" },
+  { n:13, lat:51.4975445,    lng:3.6107228,    r:10, t:"Casino / Plein 1940" },
+  { n:15, lat:51.4981744, lng:3.6106047, r:10, t:"Valpartij-kruising" },
+  { n:16, lat:51.4983526, lng:3.6107056, r:10, t:"Café Sev" }
+];
+
+const map = L.map('kaart');
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; OpenStreetMap-bijdragers'
+}).addTo(map);
+
+const latlngs = [];
+PUNTEN.forEach(p => {
+  const ll = [p.lat, p.lng];
+  latlngs.push(ll);
+
+  // tolerantiecirkel (straal in meters) — exact rond het punt
+  L.circle(ll, { radius:p.r, color:'#7fc8a9', weight:1, fillColor:'#7fc8a9', fillOpacity:0.12 }).addTo(map);
+
+  // exacte marker op de coördinaat
+  const m = L.circleMarker(ll, {
+    radius:11, color:'#14241f', weight:2, fillColor:'#e8a33d', fillOpacity:1
+  }).addTo(map);
+
+  // nummer als vast label, exact gecentreerd op het punt
+  m.bindTooltip(String(p.n), { permanent:true, direction:'center', className:'num-label' });
+
+  m.bindPopup('<b>Stap ' + p.n + ' · ' + p.t + '</b><br>' +
+    '<code>' + p.lat + ', ' + p.lng + '</code><br>straal ' + p.r + ' m');
+});
+
+// looplijn door de punten op volgorde
+L.polyline(latlngs, { color:'#e8a33d', weight:3, opacity:0.7, dashArray:'6,6' }).addTo(map);
+
+// kaart passend op alle punten
+map.fitBounds(latlngs, { padding:[40,40] });
+
+// --- Prik-functie: tik ergens om de EXACTE coördinaat te krijgen ---
+let prik = null;
+map.on('click', e => {
+  const lat = e.latlng.lat.toFixed(7), lng = e.latlng.lng.toFixed(7);
+  if (prik) prik.remove();
+  prik = L.circleMarker(e.latlng, { radius:8, color:'#fff', weight:2, fillColor:'#e07a5f', fillOpacity:1 }).addTo(map);
+  prik.bindPopup('<b>Gekozen punt</b><br><code>' + lat + ', ' + lng + '</code><br>' +
+    '<button onclick="navigator.clipboard&&navigator.clipboard.writeText(\'' + lat + ', ' + lng + '\')">Kopieer coördinaat</button>')
+    .openPopup();
+});
+</script>
+</body>
+</html>
