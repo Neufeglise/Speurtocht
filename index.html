@@ -792,7 +792,7 @@ const SPEURTOCHT = {
     if (!ep || startTijd===null || eindTijd===null) return;
     const payload={ start:new Date(startTijd).toISOString(), eind:new Date(eindTijd).toISOString(),
       duurSeconden:Math.round((eindTijd-startTijd)/1000), duur:duurTekst() };
-    try { fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); } catch(e){}
+    try { fetch(ep,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)}); } catch(e){}
   }
 
   function downloadGPX(){
