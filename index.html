@@ -49,10 +49,19 @@ body{
 
 .lijst{ display:flex; flex-direction:column; gap:14px; }
 .stap{ border:1px solid var(--line); border-radius:18px; background:var(--surface); overflow:hidden; }
-.stap.af{ background:transparent; border-style:dashed; }
+.stap.af{ background:transparent; border-style:dashed; cursor:pointer; }
 .stap.af .body{ padding:12px 16px; }
 .stap.af .stap-titel{ font-size:.98rem; color:var(--mint); }
-.stap.af .route, .stap.af .opdracht, .stap.af .slot{ display:none; }
+.stap.af .route, .stap.af .opdracht, .stap.af .slot, .stap.af .fotoblok{ display:none; }
+.stap.af.open .route, .stap.af.open .opdracht, .stap.af.open .fotoblok{ display:block; margin-top:12px; }
+.jouw-antwoord{ padding:12px 14px; border-radius:12px;
+  background:rgba(127,200,169,.08); border:1px solid rgba(127,200,169,.25); }
+.jouw-antwoord .label{ color:var(--mint); }
+.stap.af .jouw-antwoord{ display:none; }
+.stap.af.open .jouw-antwoord{ display:block; margin-top:12px; }
+.stap.af .stap-head .chev{ margin-left:auto; color:var(--mint); font-size:.8rem;
+  transition:transform .2s ease; }
+.stap.af.open .stap-head .chev{ transform:rotate(90deg); }
 .stap.slot-dicht{ background:var(--surface-2); border-style:dashed; }
 .stap.slot-dicht .body{ padding:16px; display:flex; align-items:center; gap:12px; }
 .stap.slot-dicht .route, .stap.slot-dicht .opdracht, .stap.slot-dicht .slot{ display:none; }
@@ -113,6 +122,20 @@ body{
   letter-spacing:-.01em; }
 .slot-uitleg{ color:var(--sage); font-size:.95rem; margin-bottom:20px; }
 .slot-kaart .fout{ text-align:left; }
+
+.modal-overlay{ position:fixed; inset:0; z-index:80; background:rgba(8,16,12,.74);
+  display:grid; place-items:center; padding:24px; }
+.modal-kaart{ position:relative; width:100%; max-width:380px; background:var(--surface);
+  border:1px solid var(--amber); border-radius:18px; padding:30px 22px 24px; text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.5); }
+.modal-sluit{ position:absolute; top:10px; right:12px; width:36px; height:36px;
+  border-radius:50%; border:1px solid var(--line); background:var(--surface-2);
+  color:var(--paper); font-size:1.4rem; line-height:1; cursor:pointer; padding:0;
+  display:grid; place-items:center; }
+.modal-sluit:hover{ border-color:var(--amber); }
+.modal-kaart h2{ font-family:var(--display); font-weight:700; font-size:1.45rem;
+  line-height:1.15; margin:.35em 0 .45em; color:var(--paper); }
+.modal-kaart p{ color:var(--paper); font-size:1rem; line-height:1.55; }
 
 /* GPS-blok */
 .gps{ margin-top:18px; padding:14px 16px; border-radius:12px;
@@ -397,6 +420,15 @@ const SPEURTOCHT = {
   } catch(e){}
   function bewaar(){ try { localStorage.setItem(OPSLAG, String(voltooid)); } catch(e){} }
 
+  // Onthoudt het ingetypte antwoord per stap (ook na herladen).
+  const ANTW = "speurtocht_antwoorden_v1";
+  let antwoorden = {};
+  try { const a = localStorage.getItem(ANTW); if (a) antwoorden = JSON.parse(a) || {}; } catch(e){}
+  function bewaarAntwoord(index, waarde, correct){
+    antwoorden[index] = { waarde: waarde, correct: correct };
+    try { localStorage.setItem(ANTW, JSON.stringify(antwoorden)); } catch(e){}
+  }
+
   document.getElementById("titel").textContent = data.titel;
   document.getElementById("intro").textContent = data.intro;
   document.title = data.titel;
@@ -417,6 +449,39 @@ const SPEURTOCHT = {
     return 2*R*Math.asin(Math.sqrt(a));
   }
   function leesbaar(m){ return m>=1000 ? (m/1000).toFixed(1)+" km" : Math.round(m)+" m"; }
+
+  // Pop-up die verschijnt zodra de failsafe ingrijpt (na te veel fouten).
+  // Pas de teksten hieronder gerust aan; er wordt willekeurig één gekozen.
+  function toonFailsafePopup(naDicht){
+    const teksten = [
+      { titel:"Vooruit dan maar… 🙄",
+        body:"Tien keer fout achter elkaar. Tíén! Eerlijk: óf jij bent niet de speurneus die we dachten, óf Neuf heeft deze vraag knullig in elkaar geflanst. We houden het gezellig op dat laatste. Je mag door." },
+      { titel:"De failsafe grijpt in 🚨",
+        body:"Na 10 mislukte pogingen concludeert het systeem: ofwel jij bent hopeloos, ofwel Neuf was niet helemaal lekker in z'n bol bij het maken van deze vraag. Beide kan natuurlijk ook. Je wordt alsnog doorgelaten." },
+      { titel:"Okééé, je mag door 🤷",
+        body:"Tien keer raak gemist — bijna een prestatie op zich. Óf de maker (Neuf, ja) is gewoon gek. We drukken een oogje toe en sturen je naar de volgende stap." }
+    ];
+    const k = teksten[Math.floor(Math.random()*teksten.length)];
+    const ov = document.createElement("div"); ov.className="modal-overlay";
+    const kaart = document.createElement("div"); kaart.className="modal-kaart onthul";
+    kaart.setAttribute("role","dialog"); kaart.setAttribute("aria-modal","true");
+    const sluit = document.createElement("button"); sluit.className="modal-sluit";
+    sluit.setAttribute("aria-label","Sluiten"); sluit.textContent="×";
+    const eyebrow = document.createElement("div"); eyebrow.className="eyebrow"; eyebrow.textContent="Failsafe";
+    const h = document.createElement("h2"); h.textContent=k.titel;
+    const p = document.createElement("p"); p.textContent=k.body;
+    kaart.appendChild(sluit); kaart.appendChild(eyebrow); kaart.appendChild(h); kaart.appendChild(p);
+    ov.appendChild(kaart); document.body.appendChild(ov);
+    function dicht(){
+      ov.remove();
+      document.removeEventListener("keydown", esc);
+      if (typeof naDicht==="function") naDicht();
+    }
+    function esc(e){ if (e.key==="Escape") dicht(); }
+    sluit.addEventListener("click", dicht);
+    document.addEventListener("keydown", esc);
+    sluit.focus();
+  }
 
   function voltooiStap(){
     if (voltooid < totaal){
@@ -442,7 +507,7 @@ const SPEURTOCHT = {
   }
 
   // bouwt de code/knop-afhandeling (wordt pas getoond als GPS geslaagd is)
-  function maakSlot(stap){
+  function maakSlot(stap, index){
     const wrap=document.createElement("div"); wrap.className="slot";
     const slot=stap.slot || {type:"knop"};
     if (slot.type==="code"){
@@ -456,10 +521,12 @@ const SPEURTOCHT = {
       fout.textContent="Dat klopt nog niet. Probeer het opnieuw.";
       let pogingen=0;
       function probeer(){
-        if (normaliseer(input.value)===normaliseer(slot.antwoord)){ voltooiStap(); }
+        if (normaliseer(input.value)===normaliseer(slot.antwoord)){
+          bewaarAntwoord(index, input.value.trim(), true); voltooiStap();
+        }
         else {
           pogingen++;
-          if (pogingen>=FAILSAFE){ voltooiStap(); return; }
+          if (pogingen>=FAILSAFE){ bewaarAntwoord(index, input.value.trim(), false); toonFailsafePopup(voltooiStap); return; }
           fout.style.display="block"; input.focus(); input.select();
         }
       }
@@ -511,9 +578,9 @@ const SPEURTOCHT = {
             setTimeout(naSucces,500);
           } else {
             gpsPogingen++;
-            if (gpsPogingen>=FAILSAFE){ gpsGehaald[index]=true; vul.style.width="100%";
+            if (gpsPogingen>=FAILSAFE){ vul.style.width="100%";
               status.className="gps-status ok"; status.textContent="Je mag door ✓";
-              setTimeout(naSucces,400); return; }
+              toonFailsafePopup(()=>{ gpsGehaald[index]=true; naSucces(); }); return; }
             status.className="gps-status err";
             status.textContent="Je bent nog ongeveer "+leesbaar(d)+" van het punt. Loop wat dichterbij en probeer opnieuw.";
             // balk vult naarmate je dichterbij komt (tot 5x de straal)
@@ -524,9 +591,9 @@ const SPEURTOCHT = {
         err=>{
           knop.disabled=false;
           gpsPogingen++;
-          if (gpsPogingen>=FAILSAFE){ gpsGehaald[index]=true;
+          if (gpsPogingen>=FAILSAFE){
             status.className="gps-status ok"; status.textContent="Je mag door ✓";
-            setTimeout(naSucces,400); return; }
+            toonFailsafePopup(()=>{ gpsGehaald[index]=true; naSucces(); }); return; }
           status.className="gps-status err";
           if (err.code===1) status.textContent="Geen toegang tot je locatie. Sta het toe via de melding of in de instellingen en probeer opnieuw.";
           else if (err.code===2) status.textContent="Locatie niet beschikbaar. Zorg dat GPS aanstaat en probeer het buiten opnieuw.";
@@ -559,7 +626,7 @@ const SPEURTOCHT = {
         else { render(); }
       }));
     } else {
-      body.appendChild(maakSlot(stap));
+      body.appendChild(maakSlot(stap,index));
     }
   }
 
@@ -579,35 +646,50 @@ const SPEURTOCHT = {
 
     const head=document.createElement("div"); head.className="stap-head";
     head.innerHTML='<span class="nummer">Stap '+(index+1)+(isAf?' ✓':'')+'</span>';
+    if (isAf){ const chev=document.createElement("span"); chev.className="chev"; chev.textContent="▸"; head.appendChild(chev); }
     body.appendChild(head);
     if (stap.titel && stap.titel.trim()){
       const titel=document.createElement("div"); titel.className="stap-titel";
       titel.textContent=stap.titel; body.appendChild(titel);
     }
 
+    // Inhoud (route, opdracht, foto): zichtbaar bij de huidige stap en
+    // in/uitklapbaar bij reeds afgeronde stappen.
+    if (stap.route && stap.route.trim()){
+      const route=document.createElement("div"); route.className="route";
+      route.innerHTML='<span class="label">Route</span><p></p>';
+      route.querySelector("p").textContent=stap.route; body.appendChild(route);
+    }
+    if (stap.opdracht && stap.opdracht.trim()){
+      const opd=document.createElement("div"); opd.className="opdracht";
+      opd.innerHTML='<span class="label">Opdracht</span><p></p>';
+      opd.querySelector("p").textContent=stap.opdracht; body.appendChild(opd);
+    }
+    if (stap.foto){
+      const fig=document.createElement("figure"); fig.className="fotoblok";
+      const img=document.createElement("img");
+      img.src=stap.foto; img.alt=stap.fotobijschrift||"Foto"; img.loading="lazy";
+      fig.appendChild(img);
+      if (stap.fotobijschrift){
+        const cap=document.createElement("figcaption");
+        cap.textContent=stap.fotobijschrift; fig.appendChild(cap);
+      }
+      body.appendChild(fig);
+    }
+
     if (!isAf){
-      if (stap.route && stap.route.trim()){
-        const route=document.createElement("div"); route.className="route";
-        route.innerHTML='<span class="label">Route</span><p></p>';
-        route.querySelector("p").textContent=stap.route; body.appendChild(route);
-      }
-      if (stap.opdracht && stap.opdracht.trim()){
-        const opd=document.createElement("div"); opd.className="opdracht";
-        opd.innerHTML='<span class="label">Opdracht</span><p></p>';
-        opd.querySelector("p").textContent=stap.opdracht; body.appendChild(opd);
-      }
-      if (stap.foto){
-        const fig=document.createElement("figure"); fig.className="fotoblok";
-        const img=document.createElement("img");
-        img.src=stap.foto; img.alt=stap.fotobijschrift||"Foto"; img.loading="lazy";
-        fig.appendChild(img);
-        if (stap.fotobijschrift){
-          const cap=document.createElement("figcaption");
-          cap.textContent=stap.fotobijschrift; fig.appendChild(cap);
-        }
-        body.appendChild(fig);
-      }
       maakInteractie(stap,index,body);
+    } else {
+      // Afgeronde stap: toon het ingetypte antwoord (indien er een was) ...
+      if (antwoorden[index]){
+        const a=antwoorden[index];
+        const ant=document.createElement("div"); ant.className="jouw-antwoord";
+        ant.innerHTML='<span class="label">Jouw antwoord</span><p></p>';
+        ant.querySelector("p").textContent = a.waarde + (a.correct ? "" : " — (via failsafe doorgelaten)");
+        body.appendChild(ant);
+      }
+      // ... en klik om in/uit te klappen (terugkijken mag, doorklikken niet).
+      el.addEventListener("click", ()=> el.classList.toggle("open"));
     }
     el.appendChild(body); return el;
   }
@@ -632,6 +714,7 @@ const SPEURTOCHT = {
   document.getElementById("reset").addEventListener("click",()=>{
     if (confirm("Weet je zeker dat je opnieuw wilt beginnen? Alle voortgang gaat verloren.")){
       voltooid=0; bewaar();
+      antwoorden={}; try { localStorage.removeItem(ANTW); } catch(e){}
       for (const k in gpsGehaald) delete gpsGehaald[k];
       render(); window.scrollTo({top:0,behavior:"smooth"});
     }
