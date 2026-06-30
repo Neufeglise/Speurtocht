@@ -96,6 +96,24 @@ body{
 .fout{ font-size:.9rem; color:var(--rood); margin-top:10px; font-weight:500; }
 .slotje{ font-size:1.3rem; flex:0 0 auto; opacity:.6; }
 
+.fotoblok{ margin-top:16px; }
+.fotoblok img{ display:block; width:100%; height:auto; border-radius:12px;
+  border:1px solid var(--line); }
+.fotoblok figcaption{ margin-top:8px; font-size:.85rem; color:var(--sage);
+  text-align:center; font-style:italic; }
+
+.slot-scherm{ position:fixed; inset:0; z-index:50;
+  background:radial-gradient(120% 80% at 50% -10%, #1c3329 0%, var(--bg) 55%);
+  display:grid; place-items:center; padding:24px;
+  padding-top:calc(env(safe-area-inset-top) + 24px); }
+.slot-scherm[hidden]{ display:none; }
+.slot-kaart{ width:100%; max-width:360px; text-align:center; }
+.slot-kaart h1{ font-family:var(--display); font-weight:700;
+  font-size:clamp(1.6rem,7vw,2.1rem); line-height:1.1; margin:.3em 0 .45em;
+  letter-spacing:-.01em; }
+.slot-uitleg{ color:var(--sage); font-size:.95rem; margin-bottom:20px; }
+.slot-kaart .fout{ text-align:left; }
+
 /* GPS-blok */
 .gps{ margin-top:18px; padding:14px 16px; border-radius:12px;
   background:rgba(127,200,169,.07); border:1px solid rgba(127,200,169,.22); }
@@ -167,6 +185,10 @@ const SPEURTOCHT = {
   titel: "Kimberly gaat naar buuten",
   intro: "Volg de route stap voor stap. Elke volgende stap verschijnt pas zodra je de vorige correct hebt afgerond. Tenzij anders aangegeven is elk antwoord dat je opgeeft met kleine letters.",
 
+  // Wachtwoord dat ingevoerd moet worden voordat de speurtocht begint.
+  // Hoofdletters maken niet uit. Laat leeg ("") om het wachtwoord uit te zetten.
+  wachtwoord: "Kimberly",
+
   finale: {
     vlag: "🏁",
     titel: "Goed bezig Kimmie!",
@@ -188,8 +210,8 @@ const SPEURTOCHT = {
     },
     {
       titel: "De Havenkraan",
-      route: "Steek de brug over en sla rechtsaf de Dwarskaai op. Loop deze straat uit in de richtig van de stad. Stop pas zodra je bij de Korte Delft nummer 2 bent. ",
-      opdracht: "Sta je bij het huis? Vul dan de naam (in hoofdletters) in van de winkel die zich hiertegenover bevind.",
+      route: "Steek de brug over en sla rechtsaf de Dwarskaai op. Loop deze straat uit in de richting van de stad. Stop pas zodra je bij de Korte Delft nummer 2 bent. ",
+      opdracht: "Sta je bij het huis? Vul dan de naam (in hoofdletters) in van de winkel die zich hiertegenover bevindt.",
       gps: { lat:51.4994, lng:3.6162, radius:10 },
       slot: { type:"code", antwoord:"COCO", hint:"Vier letters." }
     },
@@ -201,7 +223,7 @@ const SPEURTOCHT = {
     },
     {
       titel: "En we gaan dooorrrrrr",
-      route: "Verlaat de COCO en loop rechtas richting de Markt. Stop zodra je ter hoogte van de boom tegenover de winkel Ziengs bent.",
+      route: "Verlaat de COCO en loop rechtsaf richting de Markt. Stop zodra je ter hoogte van de boom tegenover de winkel Ziengs bent.",
       opdracht: "Hoeveel armen heeft het op de strandstoel liggende standbeeld achter haar hoofd?",
       gps: { lat:51.4985, lng:3.6149, radius:10 },
       slot: { type:"code", antwoord:"2", hint:"Meer heb je er niet als het goed is.." }
@@ -221,7 +243,7 @@ const SPEURTOCHT = {
     },
     {
       titel: "Haal je neus maar uit de boeken",
-      route: "Verlaat de winkel en ga naar rechts de Graventraat in. Zodra je weer rechtsaf kan doe je dit. ",
+      route: "Verlaat de winkel en ga naar rechts de Gravenstraat in. Zodra je weer rechtsaf kan doe je dit. ",
       opdracht: "Loop door totdat je vlak voor Admiraal de Ruyter Casino staat. Kijk in de richting van Plein 40.",
       gps: { lat:51.4975, lng:3.6107, radius:10 },
       slot: { type:"knop", knoptekst:"Ik sta met mijn neus (niet zo'n grote als die van Neuf) de goede kant op" }
@@ -229,22 +251,32 @@ const SPEURTOCHT = {
     {
       titel: "Dikke buik krijgen.",
       route: "Aan het begin van plein 1940 vanaf waar jij staat, aan de rechterzijde, bevind zich het voormalige Beaux. Nu heet dit Greenwoods, loop hiernaar toe.",
-      opdracht: "Kijk op de kaart en bestel voor jezelf een lekker lunchgerecht! Ter controle dat je echt kijkt: Er staan drie smoothies op de kaart, van welk fruit is de eers genoemde smoothie gemaakt? ",
+      opdracht: "Kijk op de kaart en bestel voor jezelf een lekker lunchgerecht! Ter controle dat je echt kijkt: Er staan drie smoothies op de kaart, van welk fruit is de eerst genoemde smoothie gemaakt? ",
       slot: { type:"code", antwoord:"framboos", hint:"Niet blij maar..?" }
     },
     {
       titel: "Het einde is nabij",
-      route: "Verlaat met je volle buik Greenwoods en loop in de richting van de kriosing van Plrin 1940, de Pottenmarkt en de Markt. ",
-      opdracht: "Als het goed is sta je dichtbij de locatie waar je, terwijl er iemand achterop je fiets zat, finaal hard onderuit ging. ga naar de locatie waar dit ongeveer gebeurde.",
-      gps: { lat:51.4983, lng:3.6107, radius:10 },
+      route: "Verlaat met je volle buik Greenwoods en loop in de richting van de kruising van Plein 1940, de Pottenmarkt en de Markt. ",
+      opdracht: "Als het goed is sta je dichtbij de locatie waar je, terwijl er iemand achterop je fiets zat, finaal hard onderuit ging. Ga naar de locatie waar dit ongeveer gebeurde.",
+      gps: { lat:51.4981744, lng:3.6106047, radius:10 },
       slot: { type:"knop", knoptekst:"Jur ligt hier nog steeds op de grond" }
     },
     {
       titel: "Het einde van deze route",
-      route: "Nu je hier toch staat, loop gezellig even naar binnen bij Sev(of een ander café)",
+      route: "Nu je hier toch staat, loop gezellig even naar binnen bij Sev (of een ander café)",
       opdracht: "Bestel een kopje koffie om het zojuist gegeten eten weg te spoelen. Tip: ijskoffie!",
       gps: { lat:51.4983526, lng:3.6107056, radius:10 },
       slot: { type:"knop", knoptekst:"Wat een kutspeurtocht heeft Neuf gemaakt, ik doe dit nooit meer." }
+    },
+    {
+      titel: "Een laatste verrassing",
+      route: "Geniet van je koffie en bekijk de foto hieronder.",
+      opdracht: "",
+      // Zet de foto in dezelfde GitHub-repo (bijv. een bestand 'foto.jpg')
+      // en zet hieronder de bestandsnaam. Een internet-link (https://...) mag ook.
+      foto: "foto.jpg",
+      fotobijschrift: "Pas dit bijschrift aan, of laat het leeg.",
+      slot: { type:"knop", knoptekst:"Wat een leuke verrassing!" }
     }
   ]
 };
@@ -254,6 +286,21 @@ const SPEURTOCHT = {
 <!-- ================================================================= -->
 <!--   Vanaf hier hoef je niets aan te passen                          -->
 <!-- ================================================================= -->
+
+<div id="slot-scherm" class="slot-scherm">
+  <div class="slot-kaart">
+    <div class="eyebrow">Beveiligd</div>
+    <h1 id="slot-titel">Speurtocht</h1>
+    <p class="slot-uitleg">Voer het wachtwoord in om te beginnen.</p>
+    <div class="codevak">
+      <input id="slot-input" type="text" inputmode="text" autocomplete="off"
+             autocapitalize="off" enterkeyhint="go" placeholder="Wachtwoord…"
+             aria-label="Wachtwoord invullen">
+      <button id="slot-knop" class="knop">Start</button>
+    </div>
+    <p id="slot-fout" class="fout" style="display:none">Onjuist wachtwoord. Probeer het opnieuw.</p>
+  </div>
+</div>
 
 <header class="kop">
   <div class="eyebrow">Speurtocht</div>
@@ -454,6 +501,17 @@ const SPEURTOCHT = {
         opd.innerHTML='<span class="label">Opdracht</span><p></p>';
         opd.querySelector("p").textContent=stap.opdracht; body.appendChild(opd);
       }
+      if (stap.foto){
+        const fig=document.createElement("figure"); fig.className="fotoblok";
+        const img=document.createElement("img");
+        img.src=stap.foto; img.alt=stap.fotobijschrift||"Foto"; img.loading="lazy";
+        fig.appendChild(img);
+        if (stap.fotobijschrift){
+          const cap=document.createElement("figcaption");
+          cap.textContent=stap.fotobijschrift; fig.appendChild(cap);
+        }
+        body.appendChild(fig);
+      }
       maakInteractie(stap,index,body);
     }
     el.appendChild(body); return el;
@@ -483,6 +541,35 @@ const SPEURTOCHT = {
       render(); window.scrollTo({top:0,behavior:"smooth"});
     }
   });
+
+  // --- Wachtwoordscherm ---
+  const TOEGANG = "speurtocht_toegang_v1";
+  const gate = document.getElementById("slot-scherm");
+  document.getElementById("slot-titel").textContent = data.titel;
+
+  let heeftToegang = false;
+  try { heeftToegang = localStorage.getItem(TOEGANG) === "ok"; } catch(e){}
+  if (!data.wachtwoord) heeftToegang = true;
+
+  if (heeftToegang){
+    gate.hidden = true;
+  } else {
+    const gInput = document.getElementById("slot-input");
+    const gKnop  = document.getElementById("slot-knop");
+    const gFout  = document.getElementById("slot-fout");
+    function probeerWachtwoord(){
+      if (normaliseer(gInput.value) === normaliseer(data.wachtwoord)){
+        try { localStorage.setItem(TOEGANG, "ok"); } catch(e){}
+        gate.hidden = true;
+      } else {
+        gFout.style.display = "block"; gInput.focus(); gInput.select();
+      }
+    }
+    gKnop.addEventListener("click", probeerWachtwoord);
+    gInput.addEventListener("keydown", e=>{ if (e.key==="Enter") probeerWachtwoord(); });
+    gInput.addEventListener("input", ()=>{ gFout.style.display="none"; });
+    gInput.focus();
+  }
 
   render();
 })();
