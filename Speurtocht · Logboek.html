@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<!-- saved from url=(0050)file:///C:/Users/Jurian/Downloads/dashboard_1.html -->
+<html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speurtocht · Logboek</title>
+<link rel="stylesheet" href="./Speurtocht · Logboek_files/leaflet.css">
+<script src="./Speurtocht · Logboek_files/leaflet.js.download"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./Speurtocht · Logboek_files/css2" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f1f17;          /* diep bosgroen, bijna zwart */
+    --panel:#16291f;        /* kaartpaneel */
+    --panel-2:#1d3628;
+    --line:#2c4a39;         /* randen */
+    --moss:#5cc184;         /* accent groen */
+    --trail:#e8622a;        /* trail-marker oranje = hiaat/alert */
+    --paper:#f3efe4;        /* perkament */
+    --paper-dim:#cfc9ba;
+    --mut:#8fa398;          /* gedempt */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #1a3327 0%, transparent 60%),
+      var(--ink);
+    color:var(--paper);
+    font-family:"Space Grotesk",system-ui,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:28px 20px 80px}
+
+  header.top{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+    padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:22px;flex-wrap:wrap;
+  }
+  .brand .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--moss);margin:0 0 6px;
+  }
+  .brand h1{font-size:30px;line-height:1;margin:0;font-weight:700;letter-spacing:-.01em}
+  .brand p{margin:8px 0 0;color:var(--mut);font-size:14px;max-width:44ch}
+
+  .stats{display:flex;gap:22px}
+  .stat{font-family:"IBM Plex Mono",monospace}
+  .stat .n{font-size:26px;font-weight:500;color:var(--paper)}
+  .stat .l{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+
+  .controls{
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:12px 16px;margin-bottom:20px;font-size:14px;
+  }
+  .controls label{color:var(--mut);font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.04em}
+  .controls input[type=range]{accent-color:var(--trail);width:150px}
+  .controls .val{font-family:"IBM Plex Mono",monospace;color:var(--trail);min-width:44px}
+  .controls button{
+    margin-left:auto;background:var(--moss);color:#08160e;border:0;border-radius:8px;
+    padding:8px 14px;font-family:"Space Grotesk";font-weight:700;font-size:13px;cursor:pointer;
+  }
+  .controls button:active{transform:translateY(1px)}
+
+  .list{display:flex;flex-direction:column;gap:12px}
+
+  .exec{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+  .exec > .head{
+    display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;
+    padding:14px 16px;cursor:pointer;user-select:none;transition:background .15s;
+  }
+  .exec > .head:hover{background:var(--panel-2)}
+  .idx{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink);
+    background:var(--moss);border-radius:6px;padding:4px 8px;font-weight:500;
+  }
+  .head .when{font-size:15px;font-weight:500}
+  .head .when small{display:block;color:var(--mut);font-weight:400;font-size:12.5px;font-family:"IBM Plex Mono",monospace;margin-top:2px}
+  .head .meta{display:flex;gap:16px;align-items:center;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--paper-dim)}
+  .head .meta b{color:var(--paper);font-weight:500}
+  .chip{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;padding:3px 8px;border-radius:20px;
+    border:1px solid var(--line);color:var(--mut);white-space:nowrap;
+  }
+  .chip.warn{color:var(--trail);border-color:#5c3322;background:#241009}
+  .chip.ok{color:var(--moss);border-color:#204a33;background:#0e2418}
+  .caret{color:var(--mut);transition:transform .2s;font-size:13px;font-family:monospace}
+  .exec.open .caret{transform:rotate(90deg)}
+
+  .body{display:none;border-top:1px solid var(--line)}
+  .exec.open .body{display:block}
+  .map{height:340px;width:100%;background:#0c1712}
+  .detail{padding:14px 16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;border-top:1px solid var(--line)}
+  .kv .k{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+  .kv .v{font-family:"IBM Plex Mono",monospace;font-size:15px;margin-top:3px}
+  .gaps{padding:0 16px 16px}
+  .gaps h4{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--trail);margin:6px 0 10px;font-family:"IBM Plex Mono",monospace}
+  .gap-row{
+    display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+    font-family:"IBM Plex Mono",monospace;font-size:13px;padding:8px 10px;border-radius:8px;background:var(--panel-2);margin-bottom:6px;
+  }
+  .gap-row .dot{width:9px;height:9px;border-radius:50%;background:var(--trail)}
+  .gap-row .span{color:var(--paper-dim)}
+  .gap-row .big{color:var(--trail);font-weight:500}
+  .none{color:var(--mut);font-family:"IBM Plex Mono",monospace;font-size:13px;padding:4px 0}
+
+  .state{
+    border:1px dashed var(--line);border-radius:12px;padding:40px 24px;text-align:center;color:var(--mut);
+  }
+  .state b{color:var(--paper);display:block;font-size:16px;margin-bottom:6px}
+  .state code{font-family:"IBM Plex Mono",monospace;color:var(--moss);font-size:13px}
+  a{color:var(--moss)}
+  .foot{margin-top:26px;color:var(--mut);font-size:12px;font-family:"IBM Plex Mono",monospace;line-height:1.6}
+  @media(max-width:640px){
+    .exec > .head{grid-template-columns:auto 1fr;grid-template-areas:"idx when" "meta meta";}
+    .head .meta{grid-area:meta}
+    .caret{display:none}
+    .detail{grid-template-columns:repeat(2,1fr)}
+    .stats{gap:16px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <p class="eyebrow">Opsporingsambtenaar · toezicht</p>
+      <h1>Speurtocht — Logboek</h1>
+      <p>Elke afgeronde tocht wordt hier vastgelegd. Klik een tocht open voor de kaart en de hiaten in de opname.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n" id="stAantal">–</div><div class="l">Tochten</div></div>
+      <div class="stat"><div class="n" id="stLaatste">–</div><div class="l">Laatste</div></div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <label for="thr">Hiaat vanaf</label>
+    <input type="range" id="thr" min="10" max="120" step="5" value="25">
+    <span class="val" id="thrVal">25 s</span>
+    <button id="ververs">Verversen</button>
+  </div>
+
+  <div id="lijst" class="list"><div class="state"><b>Nog geen tochten opgenomen</b>
+      Zodra iemand een speurtocht helemaal afrondt, verschijnt hier de eerste opname.</div></div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+// ---- Instellingen ------------------------------------------------------
+const CONFIG = {
+  owner: "Neufeglise",
+  repo:  "Speurtocht",
+  routesPath: "routes"
+};
+let GAP_S = 25;                 // hiaat-drempel in seconden
+const mapsGebouwd = new Map();  // onthoudt welke kaarten al gerenderd zijn
+
+// ---- Hulp --------------------------------------------------------------
+const $ = s => document.querySelector(s);
+function haversine(a, b){
+  const R=6371000, t=Math.PI/180;
+  const dLat=(b.lat-a.lat)*t, dLng=(b.lng-a.lng)*t;
+  const x=Math.sin(dLat/2)**2 + Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+function tijd(ms){
+  return new Date(ms).toLocaleTimeString("nl-NL",{timeZone:"Europe/Amsterdam",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+function datum(ms){
+  return new Date(ms).toLocaleDateString("nl-NL",{timeZone:"Europe/Amsterdam",weekday:"short",day:"numeric",month:"long",year:"numeric"});
+}
+function duurTekst(ms){
+  const s=Math.round(ms/1000), m=Math.floor(s/60), r=s%60, u=Math.floor(m/60);
+  if(u>0) return `${u}u ${String(m%60).padStart(2,"0")}m`;
+  return `${m}m ${String(r).padStart(2,"0")}s`;
+}
+function afstandTekst(m){ return m>=1000 ? (m/1000).toFixed(2)+" km" : Math.round(m)+" m"; }
+
+// ---- GPX inlezen -------------------------------------------------------
+function parseGpx(tekst, naam){
+  const doc = new DOMParser().parseFromString(tekst, "application/xml");
+  const trkpts = [...doc.getElementsByTagName("trkpt")];
+  const pts = trkpts.map(p=>({
+    lat:+p.getAttribute("lat"),
+    lng:+p.getAttribute("lon"),
+    t: p.getElementsByTagName("time")[0] ? Date.parse(p.getElementsByTagName("time")[0].textContent) : null
+  })).filter(p=>isFinite(p.lat)&&isFinite(p.lng));
+  return { bestand:naam, pts };
+}
+function bereken(pts){
+  if(!pts.length) return null;
+  let dist=0;
+  const gaps=[];
+  for(let i=1;i<pts.length;i++){
+    const a=pts[i-1], b=pts[i];
+    dist += haversine(a,b);
+    if(a.t && b.t){
+      const dt=b.t-a.t;
+      if(dt > GAP_S*1000){
+        gaps.push({ i0:i-1, i1:i, van:a.t, tot:b.t, dt, sprong:haversine(a,b) });
+      }
+    }
+  }
+  const start = pts.find(p=>p.t)?.t ?? null;
+  const eind  = [...pts].reverse().find(p=>p.t)?.t ?? null;
+  return { pts, dist, gaps, start, eind, duur: (start&&eind)? eind-start : null };
+}
+
+// ---- Kaart per tocht ---------------------------------------------------
+function bouwKaart(container, s){
+  const map = L.map(container,{scrollWheelZoom:false});
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
+
+  // segmenten: aaneengesloten stukjes groen, hiaat-sprongen oranje-gestippeld
+  const gapSet = new Set(s.gaps.map(g=>g.i0));
+  let run=[];
+  const flushRun=()=>{ if(run.length>1) L.polyline(run,{color:"#5cc184",weight:4,opacity:.9}).addTo(map); run=[]; };
+  for(let i=0;i<s.pts.length;i++){
+    run.push([s.pts[i].lat,s.pts[i].lng]);
+    if(gapSet.has(i)){
+      flushRun();
+      const a=s.pts[i], b=s.pts[i+1];
+      L.polyline([[a.lat,a.lng],[b.lat,b.lng]],{color:"#e8622a",weight:3,opacity:.9,dashArray:"6 7"}).addTo(map);
+      L.circleMarker([(a.lat+b.lat)/2,(a.lng+b.lng)/2],{radius:6,color:"#fff",weight:2,fillColor:"#e8622a",fillOpacity:1})
+        .addTo(map).bindPopup(`Hiaat · ${duurTekst(s.gaps.find(g=>g.i0===i).dt)}`);
+      run.push([b.lat,b.lng]);
+    }
+  }
+  flushRun();
+
+  const eersteP=s.pts[0], laatsteP=s.pts[s.pts.length-1];
+  L.circleMarker([eersteP.lat,eersteP.lng],{radius:8,color:"#fff",weight:2,fillColor:"#1e9e4a",fillOpacity:1}).addTo(map).bindPopup("Start");
+  L.circleMarker([laatsteP.lat,laatsteP.lng],{radius:8,color:"#fff",weight:2,fillColor:"#c0392b",fillOpacity:1}).addTo(map).bindPopup("Eind");
+
+  const bounds = L.latLngBounds(s.pts.map(p=>[p.lat,p.lng]));
+  map.fitBounds(bounds.pad(0.25));
+  setTimeout(()=>map.invalidateSize(),60);
+}
+
+// ---- Renderen ----------------------------------------------------------
+function render(tochten){
+  const lijst = $("#lijst");
+  lijst.innerHTML = "";
+  mapsGebouwd.clear();
+
+  if(!tochten.length){
+    lijst.innerHTML = `<div class="state"><b>Nog geen tochten opgenomen</b>
+      Zodra iemand een speurtocht helemaal afrondt, verschijnt hier de eerste opname.</div>`;
+    return;
+  }
+
+  // nieuwste eerst
+  tochten.sort((a,b)=>(b.start||0)-(a.start||0));
+  $("#stAantal").textContent = tochten.length;
+  $("#stLaatste").textContent = tochten[0].start ? tijd(tochten[0].start) : "–";
+
+  tochten.forEach((s,i)=>{
+    const nr = tochten.length - i;
+    const gapChip = s.gaps.length
+      ? `<span class="chip warn">${s.gaps.length} hiaat${s.gaps.length>1?"en":""}</span>`
+      : `<span class="chip ok">aaneengesloten</span>`;
+
+    const el = document.createElement("div");
+    el.className = "exec";
+    el.innerHTML = `
+      <div class="head">
+        <span class="idx">#${String(nr).padStart(2,"0")}</span>
+        <div class="when">${s.start?datum(s.start):"onbekende datum"}
+          <small>${s.start?tijd(s.start):"–"} → ${s.eind?tijd(s.eind):"–"}</small>
+        </div>
+        <div class="meta">
+          <span><b>${s.duur?duurTekst(s.duur):"–"}</b> duur</span>
+          <span><b>${s.pts.length}</b> punten</span>
+          ${gapChip}
+          <span class="caret">▶</span>
+        </div>
+      </div>
+      <div class="body">
+        <div class="map" id="map-${i}"></div>
+        <div class="detail">
+          <div class="kv"><div class="k">Start</div><div class="v">${s.start?tijd(s.start):"–"}</div></div>
+          <div class="kv"><div class="k">Eind</div><div class="v">${s.eind?tijd(s.eind):"–"}</div></div>
+          <div class="kv"><div class="k">Afstand</div><div class="v">${afstandTekst(s.dist)}</div></div>
+          <div class="kv"><div class="k">Hiaten</div><div class="v">${s.gaps.length}</div></div>
+        </div>
+        <div class="gaps" id="gaps-${i}"></div>
+      </div>`;
+
+    el.querySelector(".head").addEventListener("click", ()=>{
+      const open = el.classList.toggle("open");
+      if(open && !mapsGebouwd.get(i)){
+        mapsGebouwd.set(i, true);
+        bouwKaart(el.querySelector(`#map-${i}`), s);
+        vulGaps(el.querySelector(`#gaps-${i}`), s);
+      }
+    });
+    lijst.appendChild(el);
+  });
+}
+
+function vulGaps(container, s){
+  if(!s.gaps.length){ container.innerHTML = `<div class="none">Geen hiaten — de opname liep netjes door.</div>`; return; }
+  container.innerHTML = `<h4>Hiaten in de opname</h4>` + s.gaps.map(g=>`
+    <div class="gap-row">
+      <span class="dot"></span>
+      <span class="span">${tijd(g.van)} → ${tijd(g.tot)} · sprong ${afstandTekst(g.sprong)}</span>
+      <span class="big">${duurTekst(g.dt)}</span>
+    </div>`).join("");
+}
+
+// ---- Data ophalen ------------------------------------------------------
+async function laad(){
+  const lijst = $("#lijst");
+  lijst.innerHTML = `<div class="state"><b>Bezig met laden…</b>Opnames ophalen uit de repo.</div>`;
+  const api = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.routesPath}`;
+  try{
+    const r = await fetch(api,{headers:{Accept:"application/vnd.github+json"}});
+    if(r.status===404){ render([]); return; }
+    if(!r.ok){
+      if(r.status===403){
+        lijst.innerHTML = `<div class="state"><b>Even wachten</b>
+          GitHub beperkt het aantal verzoeken zonder inlog (60 per uur). Probeer het over een paar minuten opnieuw.</div>`;
+        return;
+      }
+      throw new Error("HTTP "+r.status);
+    }
+    const files = (await r.json()).filter(f=>f.name.toLowerCase().endsWith(".gpx"));
+    const teksten = await Promise.all(files.map(async f=>{
+      const t = await fetch(f.download_url); return { naam:f.name, tekst: await t.text() };
+    }));
+    const tochten = teksten
+      .map(x=>bereken(parseGpx(x.tekst, x.naam).pts))
+      .filter(Boolean);
+    render(tochten);
+    $("#foot").innerHTML =
+      `Bron: github.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.routesPath} · `+
+      `${tochten.length} opname(s) · hiaat-drempel ${GAP_S}s`;
+  }catch(e){
+    lijst.innerHTML = `<div class="state"><b>Laden mislukt</b>
+      Controleer de repo-instellingen bovenaan het script.<br><code>${String(e.message||e)}</code></div>`;
+  }
+}
+
+// ---- Bediening ---------------------------------------------------------
+let laatsteData = null;
+$("#thr").addEventListener("input", e=>{
+  GAP_S = +e.target.value;
+  $("#thrVal").textContent = GAP_S+" s";
+});
+$("#thr").addEventListener("change", ()=>laad());
+$("#ververs").addEventListener("click", ()=>laad());
+
+laad();
+</script>
+
+
+</body></html>
